@@ -1,6 +1,8 @@
 # PW-8
 Procesador de 8 bits con ISA propio basado en RISC-V para uso didáctico desarrollado en VHDL, pensado para uso en FPGA. Acompañado viene un ambiente de desarrollo y ensamblado de programas creado en Python.
 
+Este proyecto fue realizado como Trabajo Terminal en la Escuela Superior de Cómputo (ESCOM) del Instituto Politécnico Nacional (IPN).
+
 ## Tabla de Contenidos
 
 ## Resumen
