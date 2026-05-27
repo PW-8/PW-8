@@ -4,6 +4,13 @@ Procesador de 8 bits con ISA propio basado en RISC-V para uso didáctico desarro
 Este proyecto fue realizado como Trabajo Terminal en la Escuela Superior de Cómputo (ESCOM) del Instituto Politécnico Nacional (IPN).
 
 ## Tabla de Contenidos
+- Resumen
+- Características
+- Estructura del Repositorio
+- Requerimientos
+- Instalación
+- Programa de Ejemplo
+- Planes a Futuro
 
 ## Resumen
 Este proyecto implementa un procesador monociclo de 8 bits con un ISA propio basado en RISC-V, pensado para uso en la enseñanza de arquitectura de computadoras, desarrollado en VHDL y pensado para FPGAs. Con el procesador viene un ambiente con un ensamblador, también con un enfoque didáctico; creado con Python.
