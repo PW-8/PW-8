@@ -162,7 +162,7 @@ def parse_u_instr():
     if kind=="LI":
         if t[0] in ('IMM', 'IMM_NEG'):
             imm=int(consume()[1])
-            if not(0<=imm<=255):
+            if not(-128<=imm<=127):
                 raise SyntaxError(f"Línea {t[2]} Inmediato fuera de rango")
         else:
             raise SyntaxError(f"Línea {tok[2]} Se esperaba valor inmediato")
