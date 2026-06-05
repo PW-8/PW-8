@@ -1,12 +1,5 @@
 import re
 
-R_MNEMS={'add','sub','xor','and','slt','sll','srl'}
-I_MNEMS={'jalr','addi','subi','xori','andi','slti','slli','srli'}
-J_MNEMS={'jal'}
-B_MNEMS={'beq'}
-U_MNEMS={'li','ld'}
-S_MNEMS={'st'}
-
 R_code={'add':0b000,'sub':0b001,'xor':0b010,'and':0b011,'slt':0b100,'sll':0b101,'srl':0b110}
 I_code={'jalr':0b01000,'addi':0b00011,'subi':0b10011,'xori':0b00100,'andi':0b10100,'slti':0b00111,'slli':0b00101,'srli':0b10101}
 U_code={'li':0b00001,'ld':0b10001}
@@ -34,12 +27,6 @@ def lexer(line:str)->list[tuple[str, str, int]]: #.compile se encarga
     tokens.append(('EOF', '', line_num))
     return tokens
 
-def parse_reg(token: str, line_no:int) -> int:
-    m=re.fullmatch(r'[xX]([0-7])', token.strip())
-    if not m:
-        raise SyntaxError(f"Línea {line_no} registro inválido '{token}'")
-    return int(m.group(1))
-
 def parse_imm(token: str, line_no:int, lo:int=-128, hi:int=127)->int:
     try:
         v=int(token.strip())
@@ -52,8 +39,6 @@ def parse_imm(token: str, line_no:int, lo:int=-128, hi:int=127)->int:
 def parse_offset(token: str, line_no:int) -> int:
     return parse_imm(token, line_no, lo=0, hi=255)    
 
-def tobin(value:int, bits:int) -> str:
-    return format(value & ((1<<bits)-1), f'0{bits}b')
 
 token_kind=[    
     ('COMENTARIO', r'#[^\n]*'), #Expresión regular para comentarios
@@ -110,6 +95,7 @@ def parse_program(tok_list):
         skip_newlines()
     return instructions
 
+#parse_program lee la lista de tokens hasta encontrar el token correspondiente al final del archivo (EOF). Mientras no se alcance EOF, llama a parse_line para procesar cada línea de código. La función parse_line se encarga de analizar el tipo de token o instrucción presente en la línea actual, esto lo logra analizando el primer elemento de la tupla de token (que corresponde al tipo de token), en caso de ser una etiqueta, almacena su valor y posición en el diccionario de etiquetas (posiciones 1 y 2 de la tupla). En caso de ser una instrucción, llama a la función correspondiente a su tipo para analizar los operandos y obtener cada campo de la instrucción. 
 def parse_line():
     tok=peek()
     if tok[0]=='ETIQUETA_DEF':
@@ -154,7 +140,7 @@ def parse_i_instr():
         imm=int(consume()[1])
     elif tok[0]=='IMM':
         imm=imm=int(consume()[1])
-        if not (-128 <= imm <= 127):
+        if imm>127:
             raise SyntaxError(f"Línea {tok[2]} Inmediato fuera de rango")
     else:
         raise SyntaxError(f"Línea {tok[2]}: Se esperaba valor inmediato")
@@ -176,6 +162,8 @@ def parse_u_instr():
     if kind=="LI":
         if t[0] in ('IMM', 'IMM_NEG'):
             imm=int(consume()[1])
+            if not(-128<=imm<=127):
+                raise SyntaxError(f"Línea {t[2]} Inmediato fuera de rango")
         else:
             raise SyntaxError(f"Línea {tok[2]} Se esperaba valor inmediato")
         return ('U', 'li', rd, imm)
@@ -239,7 +227,10 @@ def encoder(instr, idx):
         target='.'+etiqueta
         if target not in labels:
             raise SyntaxError(f"Etiqueta no definida '{etiqueta}'")
-        imm8=labels[target]&0xFF
+        target_adrr=labels[target]
+        if not (0 <= target_adrr <= 255):
+            raise SyntaxError(f"Dirección de salto fuera de rango para etiqueta '{etiqueta}'")
+        imm8=target_adrr&0xFF
         word=(imm8<<8)|(funct1<<7)|(rd_n<<4)|opcode
         return word
     
@@ -252,7 +243,10 @@ def encoder(instr, idx):
         target='.'+etiqueta
         if target not in labels:
             raise SyntaxError(f"Etiqueta no definida '{etiqueta}'")
-        offset=(labels[target]-idx) & 0b11111
+        raw=labels[target]-idx
+        if not (-16 <= raw <= 15):
+            raise SyntaxError(f"Salto fuera de rango para etiqueta '{etiqueta}'")
+        offset=raw & 0b11111
         imm_h=(offset>>3)&0b11
         imm_lo=offset&0b111
         word=(imm_h<<14)|(rs2_n<<11)|(rs1_n<<8)|\
